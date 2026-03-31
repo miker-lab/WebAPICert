@@ -1,0 +1,43 @@
+{
+    # Disable Caddy's automatic HTTPS — we manage certs manually
+    auto_https off
+
+    # Disable OCSP — dev CA has no OCSP endpoint
+    ocsp_stapling off
+
+    # Admin API on non-default port to avoid conflicts
+    admin localhost:2020
+}
+
+localhost:7443 {
+    # Server TLS — our dev cert signed by dev CA
+    tls /home/{$USER}/caddy-dev/certs/localhost.crt \
+        /home/{$USER}/caddy-dev/certs/localhost.key {
+
+        # Require and verify client certificates
+        client_auth {
+            mode       require_and_verify
+            trust_pool file /home/{$USER}/caddy-dev/certs/ca.crt
+        }
+    }
+
+    # Forward to ASP.NET frontend running on Windows localhost
+    reverse_proxy localhost:5000 {
+
+        # Remove any client-supplied cert headers first — prevent spoofing
+
+        # Pass client cert as PEM — matched by HeaderConverter in ASP.NET
+        header_up X-ARR-ClientCert {http.request.tls.client.certificate_der_base64}
+
+        # Standard proxy headers
+        header_up X-Forwarded-Proto "https"
+        header_up X-Forwarded-Host  {host}
+        header_up X-Real-IP         {remote_host}
+    }
+
+    # Structured access log
+    log {
+        output file /home/{$USER}/caddy-dev/access.log
+        format json
+    }
+}
