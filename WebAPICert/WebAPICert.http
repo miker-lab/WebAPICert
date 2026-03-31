@@ -1,0 +1,6 @@
+@WebAPICert_HostAddress = https://localhost:7443
+
+GET {{WebAPICert_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

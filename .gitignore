@@ -1,0 +1,10 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+*.pfx
+*.key
+*.pem
+integration-ca-dev/
+caddy-dev/
