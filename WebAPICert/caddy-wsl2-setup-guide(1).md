@@ -373,11 +373,8 @@ localhost:7443 {
     # Forward to ASP.NET frontend running on Windows localhost
     reverse_proxy localhost:5000 {
 
-        # Remove any client-supplied cert headers first — prevent spoofing
-        header_up -X-ARR-ClientCert
-
-        # Pass client cert as PEM — matched by HeaderConverter in ASP.NET
-        header_up X-ARR-ClientCert {tls_client_certificate_pem}
+        # Pass verified client cert to ASP.NET as base64 DER
+        header_up X-ARR-ClientCert {http.request.tls.client.certificate_der_base64}
 
         # Standard proxy headers
         header_up X-Forwarded-Proto "https"
@@ -393,7 +390,7 @@ localhost:7443 {
 }
 ```
 
-> **ℹ️ Note:** The `header_up -X-ARR-ClientCert` line removes any client-supplied header *before* Caddy adds the real one. This prevents a caller from spoofing the cert header directly.
+> **ℹ️ Note:** Use the explicit placeholder `{http.request.tls.client.certificate_der_base64}` to ensure the forwarded cert header is populated correctly in this setup.
 
 ---
 
@@ -563,7 +560,7 @@ In Postman: **Settings → Certificates → Add Certificate → Host: `localhost
 | Caddy | WSL2 | Runs manually via `caddy run` |
 | ASP.NET Frontend | Windows | HTTP only on `localhost:5000` |
 | Public HTTPS | `localhost:7443` | TLS terminated by Caddy |
-| Client cert header | `X-ARR-ClientCert` | PEM format, matches IIS name |
+| Client cert header | `X-ARR-ClientCert` | Base64 DER from `{http.request.tls.client.certificate_der_base64}` |
 | Dev Root CA | `~/integration-ca-dev/ca/` | Trusted by Windows cert store |
 | Tenant PFX files | `~/integration-ca-dev/tenants/` | For curl and Postman testing |
 | Thumbprints | Dev database | Seeded per tenant after cert generation |
